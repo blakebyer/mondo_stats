@@ -44,6 +44,9 @@ CDC_AGENT_PROMPT = (
     - Allow synonym flexibility: If the initial search does not yield an appropriate match, you may retry using paraphrased forms (e.g., "carcinoma" for "cancer", "oral cavity" -> "oral", "lip" -> "mouth") to ensure better semantic matches.
     - Critically, do not return overly specific, overly general, or unrelated disease entities (e.g., do not return "X-linked intellectual disability-short stature-overweight syndrome" for "overweight"). The match must refer to the same condition or its direct synonym, not a syndrome or phenotype where the condition is only a secondary feature.
     - When multiple candidates are found, ensure that the selected MONDO term is the **best possible match** in specificity and meaning to the disease mentioned in the indicator. Prefer exact matches or primary labels over broader categories or partial overlaps.
+    - If multiple MONDO terms are required to represent the indicator (e.g., "Tuberculosis in HIV-positive patients"), return multiple MONDO IDs and labels, separated by a pipe (`|`). For example:
+        - MONDO_ID: MONDO:0018076|MONDO:0005109
+        - MONDO_Label: tuberculosis|HIV infectious disease
 
     Only return the `id` and `label` exactly as returned by the tool. Do not guess, infer, or invent labels. If no appropriate match is found, leave both fields blank.
                         
@@ -57,6 +60,14 @@ CDC_AGENT_PROMPT = (
     Only return the `id` and `label` exactly as returned by the tool. Do not guess, infer, or invent labels. If not found, leave both fields blank. 
                         
     4. Denominator -> Extract the denominator value from the indicator name. For example, if the text says "per 100,000", return 100000. If it says "per 1000", return 1000. If it says "%" return 100. If no denominator is present or is not clearly extractable, leave this field blank.
+
+    5. Logic -> Describe the logical relationship **only between MONDO terms** using an expression in the format `AND(...)`, `OR(...)`, or `NOT(...)`, where the arguments refer to the index of each MONDO term (starting at 0) in the order listed. 
+        - If only one MONDO term is returned, use `AND(0)`.
+        - If two or more terms are returned, use the appropriate logical combination. For example:
+        - `AND(0, 1)` if both conditions apply
+        - `OR(0, 1)` if either applies
+        - `AND(0, NOT(1))` if one condition excludes another
+        - Do not include logic for STATO or denominator fields — only MONDO terms should be part of the logical expression.
 
     IMPORTANT: A tool's response will include both the ID and the label if found, therefore do not invent new term IDs or labels, only use those found in the ontology. You should prioritize speed and accuracy. Return only the JSON list. Do not include explanations, commentary, or free text. Each object must match the CDCAnnotation schema exactly.
     """

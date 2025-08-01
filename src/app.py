@@ -3,6 +3,7 @@ import cdc_agent
 import who_agent
 import pandas as pd
 import plotly.express as px
+import numpy as np
 
 st.set_page_config(layout="wide")
 st.title("MONDO Disease Statistics")
@@ -29,6 +30,12 @@ if data_choice == "WHO":
         hide_index=True
     )
     plot_df = selected[['IndicatorName', 'MONDO_ID', 'MONDO_Label', 'STATO_ID', 'STATO_Label', 'Denominator', 'SpatialDimType', 'SpatialDim', 'TimeDimType', 'TimeDimensionValue', 'NumericValue', 'Low', 'High']].dropna().drop_duplicates()
+    plot_df["NormalizedValue"] = np.divide(
+        plot_df["NumericValue"],
+        plot_df["Denominator"],
+        out=np.full_like(plot_df["NumericValue"], np.nan, dtype=np.float64),
+        where=(plot_df["Denominator"] != 0) & plot_df["Denominator"].notna() & plot_df["NumericValue"].notna()
+    )
 
     spatial_dims = plot_df['SpatialDim'].dropna().unique()
     selected_dims = st.multiselect(
@@ -39,10 +46,10 @@ if data_choice == "WHO":
     filtered_df = plot_df[plot_df["SpatialDim"].isin(selected_dims)]
 
     fig = px.scatter(
-        filtered_df, x="TimeDimensionValue", y="NumericValue", color='IndicatorName', facet_row="SpatialDim",
+        filtered_df, x="TimeDimensionValue", y="NormalizedValue", color='IndicatorName', facet_row="SpatialDim",
         labels={
         "TimeDimensionValue": "Year",
-        "NumericValue": "Value",
+        "NormalizedValue": "Value",
         "IndicatorName": "Indicator",
         "SpatialDim": "Country"
         },
