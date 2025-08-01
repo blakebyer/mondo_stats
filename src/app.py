@@ -29,7 +29,7 @@ if data_choice == "WHO":
         key="search_table",
         hide_index=True
     )
-    plot_df = selected[['IndicatorName', 'MONDO_ID', 'MONDO_Label', 'STATO_ID', 'STATO_Label', 'Denominator', 'SpatialDimType', 'SpatialDim', 'TimeDimType', 'TimeDimensionValue', 'NumericValue', 'Low', 'High']].dropna().drop_duplicates()
+    plot_df = selected[['IndicatorName', 'MONDO_ID', 'MONDO_Label', 'STATO_ID', 'STATO_Label', 'Denominator', 'Logic', 'SpatialDimType', 'SpatialDim', 'TimeDimType', 'TimeDimensionValue', 'NumericValue', 'Low', 'High']].dropna().drop_duplicates()
     plot_df["NormalizedValue"] = np.divide(
         plot_df["NumericValue"],
         plot_df["Denominator"],
@@ -41,16 +41,16 @@ if data_choice == "WHO":
     selected_dims = st.multiselect(
         "Select countries:",
         options=sorted(spatial_dims),
-        default=sorted(spatial_dims)[:6]
+        default=sorted(spatial_dims)[:4]
     )
     filtered_df = plot_df[plot_df["SpatialDim"].isin(selected_dims)]
 
     fig = px.scatter(
-        filtered_df, x="TimeDimensionValue", y="NormalizedValue", color='IndicatorName', facet_row="SpatialDim",
+        filtered_df, x="TimeDimensionValue", y="NormalizedValue", color='MONDO_Label', facet_row="SpatialDim",
         labels={
         "TimeDimensionValue": "Year",
         "NormalizedValue": "Value",
-        "IndicatorName": "Indicator",
+        "MONDO_Label": "MONDO Label",
         "SpatialDim": "Country"
         },
         title="Trends by Country"

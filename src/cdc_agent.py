@@ -20,10 +20,10 @@ class CDCAnnotation(BaseModel):
     IndicatorName: str
     MONDO_ID: Optional[str] = None
     MONDO_Label: Optional[str] = None
-    # Logic: Optional[str] = None
     STATO_ID: Optional[str] = None
     STATO_Label: Optional[str] = None
     Denominator: Optional[int] = None
+    Logic: Optional[str] = None
 
 CDC_AGENT_PROMPT = (
     """
