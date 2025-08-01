@@ -13,7 +13,6 @@ def get_who_data(proportion="incidence", limit=1000):
         "$top":limit
     }
     p = requests.get(url, params)
-    print(p.url)
     proportion_ind = p.json()['value']
     indicator_df = pd.DataFrame(proportion_ind)
     

@@ -7,6 +7,7 @@ import pandas as pd
 from cdc_query import get_cdc_data
 from who_agent import get_mondo_adapter, get_stato_adapter, search_mondo, search_stato
 import time
+import streamlit as st
 
 load_dotenv()
 
@@ -19,6 +20,7 @@ class CDCAnnotation(BaseModel):
     IndicatorName: str
     MONDO_ID: Optional[str] = None
     MONDO_Label: Optional[str] = None
+    # Logic: Optional[str] = None
     STATO_ID: Optional[str] = None
     STATO_Label: Optional[str] = None
     Denominator: Optional[int] = None
@@ -67,6 +69,7 @@ prop_agent = Agent(
     tools=[search_mondo, search_stato],
 )
 
+@st.cache_resource(show_spinner=False)
 def curate_prop(proportion: str, limit=1000, batch_size=10, sleep=2):
     """A high level function to curate MONDO and STATO terms from CDC rate, prevalence, or number (count) data"""
     cdc_df = get_cdc_data(proportion,limit=limit)

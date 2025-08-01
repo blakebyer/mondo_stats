@@ -68,6 +68,7 @@ class WHOAnnotation(BaseModel):
     IndicatorName: str
     MONDO_ID: Optional[str] = None
     MONDO_Label: Optional[str] = None
+    #Logic: Optional[str] = None
     STATO_ID: Optional[str] = None
     STATO_Label: Optional[str] = None
     Denominator: Optional[int] = None
@@ -107,6 +108,7 @@ prop_agent = Agent(
     tools=[search_mondo, search_stato],
 )
 
+@st.cache_resource(show_spinner=False)
 def curate_prop(proportion: str, limit=1000, batch_size=10, sleep=2):
     """A high level function to curate MONDO and STATO terms from WHO incidence, prevalence, or count data"""
     who_df = get_who_data(proportion, limit=limit)
