@@ -12,7 +12,7 @@ CDC_APP_TOKEN = os.getenv("CDC_APP_TOKEN")
 CDC_API_KEY = os.getenv("CDC_API_KEY")
 
 @st.cache_resource(show_spinner="Fetching CDC data...")
-def get_cdc_data(proportion="prevalence", limit=10000):
+def get_cdc_data(proportion="prevalence", limit=1000):
     url = "https://data.cdc.gov/resource/hksd-2xuw.json"
     params = {
         "$where":f"LOWER(datavaluetype) LIKE '%{proportion.lower()}%'",

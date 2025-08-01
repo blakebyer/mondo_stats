@@ -61,7 +61,7 @@ CDC_AGENT_PROMPT = (
 )
 
 prop_agent = Agent(
-    model="gpt-3.5-turbo",
+    model="gpt-4.1",
     output_type=List[CDCAnnotation],
     system_prompt=CDC_AGENT_PROMPT,
     tools=[search_mondo, search_stato],

@@ -18,16 +18,6 @@ if data_choice == "WHO":
     )
     with st.spinner("Matching WHO Indicators to MONDO..."):
         selected = who_agent.curate_prop(prop_choice)
-
-if data_choice == "CDC":
-    statistic = ["Prevalence", "Rate", "Number"] 
-    prop_choice = st.segmented_control(
-        "Select statistic:", statistic, default=statistic[0]
-    )
-    with st.spinner("Matching CDC Indicators to MONDO..."):
-        selected = cdc_agent.curate_prop(prop_choice)
-
-if not selected.empty:
     selection_event = st.dataframe(
         selected,
         selection_mode="multi-row",
@@ -36,3 +26,20 @@ if not selected.empty:
         key="search_table",
         hide_index=True
     )
+
+if data_choice == "CDC":
+    statistic = ["Prevalence", "Rate", "Number"] 
+    prop_choice = st.segmented_control(
+        "Select statistic:", statistic, default=statistic[0]
+    )
+    with st.spinner("Matching CDC Indicators to MONDO..."):
+        selected = cdc_agent.curate_prop(prop_choice)
+    selection_event = st.dataframe(
+        selected,
+        selection_mode="multi-row",
+        on_select="rerun",
+        use_container_width=True,
+        key="search_table",
+        hide_index=True
+    )
+    

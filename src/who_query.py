@@ -9,9 +9,10 @@ import streamlit as st
 def get_who_data(proportion="incidence"):
     url = "https://ghoapi.azureedge.net/api/Indicator"
     params = {
-        "$filter":f"contains(IndicatorName,{proportion.lower()})",
+        "$filter":f"contains(IndicatorName,'{proportion.lower()}')",
     }
     p = requests.get(url, params)
+    print(p.url)
     proportion_ind = p.json()['value']
     indicator_df = pd.DataFrame(proportion_ind)
     
