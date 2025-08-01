@@ -48,7 +48,9 @@ CDC_AGENT_PROMPT = (
     3. STATO_ID and STATO_Label -> Use a single call to `search_stato` to retrieve both the STATO ID and its label from the IndicatorName parentheses, which takes the format "(datavaluetype, datavalueunit)", e.g. "(Crude Prevalence, %)" in IndicatorName = "Binge drinking prevalence among adults (Crude Prevalence, %)". In this example, you would return STATO:0000412 and label "prevalence".
 
     Examples of STATO_Labels include "prevalence", "rate", "incidence", and "count". 
-    One special case is datavaluetype "Number" which should be mapped to STATO:0000047 and label "count" even if the IndicatorName prefix contains the word "incidence".
+    Special cases:
+    - When datavaluetype == "Number" which should be mapped to STATO:0000047 and label "count" even if the IndicatorName prefix contains the word "incidence".
+    - When datavaluetype == "Rate" and datavalueunit includes "per" then it should be mapped to STATO:0000412 and label "prevalence".
 
     Only return the `id` and `label` exactly as returned by the tool. Do not guess, infer, or invent labels. If not found, leave both fields blank. 
                         
@@ -59,7 +61,7 @@ CDC_AGENT_PROMPT = (
 )
 
 prop_agent = Agent(
-    model="openai:gpt-4o",
+    model="openai:gpt-4.1",
     output_type=List[CDCAnnotation],
     system_prompt=CDC_AGENT_PROMPT,
     tools=[search_mondo, search_stato],
