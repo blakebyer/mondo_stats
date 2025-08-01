@@ -1,6 +1,7 @@
 import streamlit as st
 import cdc_agent
 import who_agent
+import pandas as pd
 
 st.set_page_config(layout="wide")
 st.title("MONDO Disease Statistics")
@@ -11,28 +12,22 @@ data_choice = st.segmented_control(
     )
 
 if data_choice == "WHO":
-    statistic = ["Prevalence", "Incidence"]
+    statistic = ["Incidence", "Prevalence"]
     prop_choice = st.segmented_control(
-        "Selected statistic:", statistic
+        "Selected statistic:", statistic, default=statistic[0]
     )
     with st.spinner("Matching WHO Indicators to MONDO..."):
-        selected = who_agent.curate_prop(prop_choice)
-    selection_event = st.dataframe(
-        selected,
-        selection_mode="multi-row",
-        on_select="rerun",
-        use_container_width=True,
-        key="search_table",
-        hide_index=True
-    )
+        selected = who_agent.curate_prop(prop_choice) or pd.DataFrame()
 
 if data_choice == "CDC":
     statistic = ["Prevalence", "Rate", "Number"] 
     prop_choice = st.segmented_control(
-        "Selected statistic:", statistic
+        "Select statistic:", statistic, default=statistic[0]
     )
     with st.spinner("Matching CDC Indicators to MONDO..."):
-        selected = cdc_agent.curate_prop(prop_choice)
+        selected = cdc_agent.curate_prop(prop_choice) or pd.DataFrame()
+
+if not selected.empty:
     selection_event = st.dataframe(
         selected,
         selection_mode="multi-row",
