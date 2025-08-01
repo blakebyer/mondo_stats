@@ -107,9 +107,9 @@ prop_agent = Agent(
     tools=[search_mondo, search_stato],
 )
 
-def curate_prop(proportion: str, batch_size=10, sleep=2):
+def curate_prop(proportion: str, limit=1000, batch_size=10, sleep=2):
     """A high level function to curate MONDO and STATO terms from WHO incidence, prevalence, or count data"""
-    who_df = get_who_data(proportion)
+    who_df = get_who_data(proportion, limit=limit)
     indicators = who_df["IndicatorName"].dropna().unique()
     results = []
 
