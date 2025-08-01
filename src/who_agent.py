@@ -9,13 +9,22 @@ import pandas as pd
 import threading
 from who_query import get_who_data
 import time
+import streamlit as st
 
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-mondo = get_adapter("sqlite:obo:mondo")
-stato = get_adapter("sqlite:obo:stato")
+@st.cache_resource()
+def get_mondo_adapter():
+    return get_adapter("sqlite:obo:mondo")
+
+@st.cache_resource()
+def get_stato_adapter():
+    return get_adapter("sqlite:obo:stato")
+
+mondo = get_mondo_adapter()
+stato = get_stato_adapter()
 
 mondo_lock = threading.Lock()
 stato_lock = threading.Lock()
@@ -63,7 +72,7 @@ class WHOAnnotation(BaseModel):
     STATO_Label: Optional[str] = None
     Denominator: Optional[int] = None
 
-PROP_AGENT_PROMPT = ("""
+WHO_AGENT_PROMPT = ("""
 You are an expert biocurator familiar with the MONDO Disease Ontology and disease terminology. Your task is to help curate ontology terms for given World Health Organization proportion estimates.
 
 You will receive a single input string containing multiple WHO indicator names, separated by newline characters ('\\n'). For example:
@@ -74,27 +83,31 @@ Each line corresponds to a single indicator. For each newline-separated indicato
 
 1. IndicatorName -> Copy the exact value of the indicator as it appears.
                      
-2. MONDO_ID and MONDO_Label -> Use the `search_mondo` tool to identify the disease or condition explicitly mentioned in the indicator. Return only exact matches or direct synonyms of the disease entity described. If the initial search does not yield an appropriate match, you may retry with common synonyms, abbreviations, or alternative phrasings (e.g., "carcinoma" instead of "cancer"). 
+2. MONDO_ID and MONDO_Label -> Use the `search_mondo` tool to identify the disease or condition explicitly mentioned in the indicator.                    
 
-Critically, do not return overly specific or unrelated disease entities (e.g., do not return "X-linked intellectual disability-short stature-overweight syndrome" for "overweight"). The match must refer to the same condition or its direct synonym, not a syndrome or phenotype where the condition is only a secondary feature.
+- First, extract the likely disease portion by removing phrases such as "incidence of", "prevalence of", "rate of", "per [number]", or "count of" to isolate the disease phrase.
+- Try extracting from after the word "of", if present, or by removing common statistical and population suffixes.
+- Allow synonym flexibility: If the initial search does not yield an appropriate match, you may retry using paraphrased forms (e.g., "carcinoma" for "cancer", "oral cavity" -> "oral", "lip" -> "mouth") to ensure better semantic matches.
+- Critically, do not return overly specific, overly general, or unrelated disease entities (e.g., do not return "X-linked intellectual disability-short stature-overweight syndrome" for "overweight"). The match must refer to the same condition or its direct synonym, not a syndrome or phenotype where the condition is only a secondary feature.
+- When multiple candidates are found, ensure that the selected MONDO term is the **best possible match** in specificity and meaning to the disease mentioned in the indicator. Prefer exact matches or primary labels over broader categories or partial overlaps.
 
 Only return the `id` and `label` exactly as returned by the tool. Do not guess, infer, or invent labels. If no appropriate match is found, leave both fields blank.
                      
-3. STATO_ID and STATO_Label -> Use a single call to `search_stato` to retrieve both the STATO ID and its label (e.g. for "prevalence", "incidence", or "count"). If not found, leave both fields blank. For instance, prevalence is STATO:0000412 and the label is "prevalence".
+3. STATO_ID and STATO_Label -> Use a single call to `search_stato` to retrieve both the STATO ID and its label in the IndicatorName (e.g. for "prevalence", "incidence", or "count"). If not found, leave both fields blank. For instance, prevalence is STATO:0000412 and the label is "prevalence".
                      
 4. Denominator -> Extract the denominator value from the indicator name. For example, if the text says "per 100,000", return 100000. If it says "per 1000", return 1000. If it says "%" return 100. If no denominator is present or is not clearly extractable, leave this field blank.
 
-IMPORTANT: A tool's response will include both the ID and the label if found, therefore not invent new term IDs or labels, only use those found in the ontology. You should prioritize speed and accuracy. Return only the JSON list. Do not include explanations, commentary, or free text. Each object must match the WHOAnnotation schema exactly.
+IMPORTANT: A tool's response will include both the ID and the label if found, therefore do not invent new term IDs or labels, only use those found in the ontology. You should prioritize speed and accuracy. Return only the JSON list. Do not include explanations, commentary, or free text. Each object must match the WHOAnnotation schema exactly.
 """)
 
 prop_agent = Agent(
-    model="openai:gpt-4o",
+    model="openai:gpt-4.1",
     output_type=List[WHOAnnotation],
-    system_prompt=PROP_AGENT_PROMPT,
+    system_prompt=WHO_AGENT_PROMPT,
     tools=[search_mondo, search_stato],
 )
 
-def curate_prop(proportion="incidence", batch_size=10, sleep=2):
+def curate_prop(proportion: str, batch_size=10, sleep=2):
     """A high level function to curate MONDO and STATO terms from WHO incidence, prevalence, or count data"""
     who_df = get_who_data(proportion)
     indicators = who_df["IndicatorName"].dropna().unique()

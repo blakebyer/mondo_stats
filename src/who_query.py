@@ -3,9 +3,15 @@ import numpy as np
 import requests
 from tqdm import tqdm
 import json
+import streamlit as st
 
-def get_who_data(proportion):
-    p = requests.get(f"https://ghoapi.azureedge.net/api/Indicator?$filter=contains(IndicatorName,'{proportion}')")
+@st.cache_resource(show_spinner="Fetching WHO data...")
+def get_who_data(proportion="incidence"):
+    url = "https://ghoapi.azureedge.net/api/Indicator"
+    params = {
+        "$filter":f"contains(IndicatorName,{proportion.lower()})",
+    }
+    p = requests.get(url, params)
     proportion_ind = p.json()['value']
     indicator_df = pd.DataFrame(proportion_ind)
     
