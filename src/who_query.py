@@ -6,10 +6,11 @@ import json
 import streamlit as st
 
 @st.cache_resource(show_spinner="Fetching WHO data...")
-def get_who_data(proportion="incidence"):
+def get_who_data(proportion="incidence", limit=1000):
     url = "https://ghoapi.azureedge.net/api/Indicator"
     params = {
         "$filter":f"contains(IndicatorName,'{proportion.lower()}')",
+        "$top":limit
     }
     p = requests.get(url, params)
     print(p.url)
