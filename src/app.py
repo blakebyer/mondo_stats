@@ -55,6 +55,10 @@ if data_choice == "WHO":
         },
         title="Trends by Country"
     )
+    fig.update_layout(
+    font=dict(size=20),
+    title=dict(font=dict(size=24)),  # override for title
+    legend=dict(font=dict(size=20)))
     st.plotly_chart(fig)
 
 
@@ -76,12 +80,12 @@ if data_choice == "CDC":
     )
     plot_df = selected[['IndicatorName', 'MONDO_ID', 'MONDO_Label', 'STATO_ID', 'STATO_Label', 'Denominator', 'yearstart', 'yearend', 'locationabbr','locationdesc', 'datavalue', 'lowconfidencelimit', 'highconfidencelimit', 'stratificationcategory1', 'stratification1']].dropna().drop_duplicates()
 
-    plot_df["NormalizedValue"] = np.divide(
-        plot_df["datavalue"],
-        plot_df["Denominator"],
-        out=np.full_like(plot_df["datavalue"], np.nan, dtype=np.float64),
-        where=(plot_df["Denominator"] != 0) & plot_df["Denominator"].notna() & plot_df["datavalue"].notna()
-    )
+    # plot_df["NormalizedValue"] = np.divide(
+    #     plot_df["datavalue"],
+    #     plot_df["Denominator"],
+    #     out=np.full_like(plot_df["datavalue"], np.nan, dtype=np.float64),
+    #     where=(plot_df["Denominator"] != 0) & plot_df["Denominator"].notna() & plot_df["datavalue"].notna()
+    # )
 
     spatial_dims = plot_df['locationdesc'].dropna().unique()
     selected_dims = st.multiselect(
@@ -92,15 +96,18 @@ if data_choice == "CDC":
     filtered_df = plot_df[plot_df["locationdesc"].isin(selected_dims)]
 
     fig = px.scatter(
-        filtered_df, x="yearstart", y="NormalizedValue", color='MONDO_Label', facet_row="locationdesc",
+        filtered_df, x="yearstart", y="datavalue", color='MONDO_Label', facet_row="locationdesc",
         labels={
         "yearstart": "Year",
-        "NormalizedValue": "Value",
+        "datavalue": "Value",
         "MONDO_Label": "MONDO Label",
         "locationdesc": "State"
         },
         title="Trends by State"
     )
-
+    fig.update_layout(
+    font=dict(size=20),  # sets default font size for most elements
+    title=dict(font=dict(size=24)),  # override for title
+    legend=dict(font=dict(size=20)))
     st.plotly_chart(fig)
     
