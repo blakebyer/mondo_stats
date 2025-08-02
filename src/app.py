@@ -41,7 +41,7 @@ if data_choice == "WHO":
     selected_dims = st.multiselect(
         "Select countries:",
         options=sorted(spatial_dims),
-        default=sorted(spatial_dims)[:4]
+        default=sorted(spatial_dims)[:6]
     )
     filtered_df = plot_df[plot_df["SpatialDim"].isin(selected_dims)]
 
@@ -76,8 +76,31 @@ if data_choice == "CDC":
     )
     plot_df = selected[['IndicatorName', 'MONDO_ID', 'MONDO_Label', 'STATO_ID', 'STATO_Label', 'Denominator', 'yearstart', 'yearend', 'locationabbr','locationdesc', 'datavalue', 'lowconfidencelimit', 'highconfidencelimit', 'stratificationcategory1', 'stratification1']].dropna().drop_duplicates()
 
-    fig = px.line(
-        plot_df, x="yearstart", y="datavalue", color='IndicatorName'
+    plot_df["NormalizedValue"] = np.divide(
+        plot_df["datavalue"],
+        plot_df["Denominator"],
+        out=np.full_like(plot_df["datavalue"], np.nan, dtype=np.float64),
+        where=(plot_df["Denominator"] != 0) & plot_df["Denominator"].notna() & plot_df["datavalue"].notna()
     )
+
+    spatial_dims = plot_df['locationdesc'].dropna().unique()
+    selected_dims = st.multiselect(
+        "Select states:",
+        options=sorted(spatial_dims),
+        default=sorted(spatial_dims)[:6]
+    )
+    filtered_df = plot_df[plot_df["locationdesc"].isin(selected_dims)]
+
+    fig = px.scatter(
+        filtered_df, x="yearstart", y="NormalizedValue", color='MONDO_Label', facet_row="locationdesc",
+        labels={
+        "yearstart": "Year",
+        "NormalizedValue": "Value",
+        "MONDO_Label": "MONDO Label",
+        "locationdesc": "State"
+        },
+        title="Trends by State"
+    )
+
     st.plotly_chart(fig)
     

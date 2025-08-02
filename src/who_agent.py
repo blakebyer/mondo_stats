@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
 from pydantic_ai import Agent
+from pydantic_ai.settings import ModelSettings
+from pydantic_ai.usage import UsageLimits
 from pydantic import BaseModel
 from typing import Optional, List
 from oaklib import get_adapter
@@ -10,6 +12,9 @@ import threading
 from who_query import get_who_data
 import time
 import streamlit as st
+from tenacity import retry, wait_random_exponential, stop_after_attempt
+from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
+from pydantic_ai.exceptions import ModelHTTPError
 
 load_dotenv()
 
@@ -109,7 +114,7 @@ Only return the `id` and `label` exactly as returned by the tool. Do not guess, 
   - `AND(0, NOT(1))` if one condition excludes another
 - Do not include logic for STATO or denominator fields — only MONDO terms should be part of the logical expression.
 
-IMPORTANT: A tool's response will include both the ID and the label if found, therefore do not invent new term IDs or labels, only use those found in the ontology. You should prioritize speed and accuracy. Return only the JSON list. Do not include explanations, commentary, or free text. Each object must match the WHOAnnotation schema exactly.
+IMPORTANT: A tool's response will include both the ID and the label if found, therefore do not invent new term IDs or labels, only use those found in the ontology. Do NOT overuse tool calling. If you cannot find an appropriate term within a couple (<5) tries, leave both ID and label blank. You should prioritize speed and accuracy. Return only the JSON list. Do not include explanations, commentary, or free text. Each object must match the WHOAnnotation schema exactly.
 """)
 
 prop_agent = Agent(
@@ -117,7 +122,16 @@ prop_agent = Agent(
     output_type=List[WHOAnnotation],
     system_prompt=WHO_AGENT_PROMPT,
     tools=[search_mondo, search_stato],
+    #model_settings=ModelSettings(max_tokens=4096)
 )
+
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6),
+       retry=retry_if_exception_type(ModelHTTPError))
+def call_agent_with_retry(batched_input):
+    return prop_agent.run_sync(
+        batched_input,
+        usage_limits=UsageLimits(request_limit=6),
+    )
 
 @st.cache_resource(show_spinner=False)
 def curate_prop(proportion: str, limit=1000, batch_size=10, sleep=2):
@@ -131,7 +145,7 @@ def curate_prop(proportion: str, limit=1000, batch_size=10, sleep=2):
         batched_input = "\n".join(chunk)
 
         try:
-            result = prop_agent.run_sync(batched_input)
+            result = call_agent_with_retry(batched_input)
 
             if isinstance(result.output, list):
                 results.extend(result.output)
