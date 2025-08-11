@@ -19,7 +19,7 @@ if data_choice == "WHO":
         "Selected statistic:", statistic, default=statistic[0]
     )
     with st.spinner("Matching WHO Indicators to MONDO..."):
-        selected = who_agent.curate_prop(prop_choice)
+        selected = who_agent.curate_prop(prop_choice, save=True)
     
     selection_event = st.dataframe(
         selected,
@@ -68,7 +68,7 @@ if data_choice == "CDC":
         "Select statistic:", statistic, default=statistic[0]
     )
     with st.spinner("Matching CDC Indicators to MONDO..."):
-        selected = cdc_agent.curate_prop(prop_choice)
+        selected = cdc_agent.curate_prop(prop_choice, save=True)
     
     selection_event = st.dataframe(
         selected,

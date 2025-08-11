@@ -12,6 +12,7 @@ import time
 import streamlit as st
 from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
 from pydantic_ai.exceptions import ModelHTTPError
+from save import save_tsv
 
 load_dotenv()
 
@@ -90,11 +91,11 @@ prop_agent = Agent(
 def call_agent_with_retry(batched_input):
     return prop_agent.run_sync(
         batched_input,
-        usage_limits=UsageLimits(request_limit=6),
+        usage_limits=UsageLimits(request_limit=10),
     )
 
 @st.cache_resource(show_spinner=False)
-def curate_prop(proportion: str, limit=1000, batch_size=10, sleep=2):
+def curate_prop(proportion: str, limit=1000, batch_size=10, sleep=2, save=False, save_dir="data"):
     """A high level function to curate MONDO and STATO terms from CDC rate, prevalence, or number (count) data"""
     cdc_df = get_cdc_data(proportion,limit=limit)
     cdc_df["IndicatorName"] = (
@@ -124,4 +125,7 @@ def curate_prop(proportion: str, limit=1000, batch_size=10, sleep=2):
     results_dicts = [r.model_dump() for r in results]
     results_df = pd.DataFrame(results_dicts)
     final_df = results_df.merge(cdc_df, on='IndicatorName', how="inner")
+
+    if save:
+        save_tsv(final_df, "cdc", folder=save_dir)
     return final_df
