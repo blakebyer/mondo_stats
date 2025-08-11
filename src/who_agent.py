@@ -20,11 +20,11 @@ load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-@st.cache_resource()
+@st.cache_resource(show_spinner="Fetching MONDO...")
 def get_mondo_adapter():
     return get_adapter("sqlite:obo:mondo")
 
-@st.cache_resource()
+@st.cache_resource(show_spinner="Fetching STATO...")
 def get_stato_adapter():
     return get_adapter("sqlite:obo:stato")
 
