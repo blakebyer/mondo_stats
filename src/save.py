@@ -1,5 +1,5 @@
 import os
-import datetime
+from datetime import datetime
 
 def save_tsv(df, prefix, folder="data"):
     """Save curated results as a TSV"""
