@@ -1,0 +1,11 @@
+numpy==2.3.2
+oaklib==0.6.23
+pandas==2.3.2
+plotly==6.2.0
+pydantic==2.11.7
+pydantic_ai==0.8.1
+python-dotenv==1.1.1
+Requests==2.32.5
+streamlit==1.46.1
+tenacity==8.5.0
+tqdm==4.67.1
