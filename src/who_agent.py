@@ -13,7 +13,6 @@ from who_query import get_who_data
 import time
 import streamlit as st
 from tenacity import retry, wait_random_exponential, stop_after_attempt
-from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
 from pydantic_ai.exceptions import ModelHTTPError
 from save import save_tsv
 
